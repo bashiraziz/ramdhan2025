@@ -1,9 +1,9 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Home, Info, Users, Calculator, MapPin, Image, LogOut } from "lucide-react";
-import { useAuth, useAuthCheck } from "@/lib/auth"; // Import Zustand store
+import Link from "next/link"
+import { usePathname, useRouter } from "next/navigation"
+import { Home, Info, Users, Calculator, MapPin, Image, LogOut } from "lucide-react"
+import { useAuth } from "@/lib/auth"
 
 const navItems = [
   { href: "/about", label: "About", icon: Info },
@@ -11,18 +11,17 @@ const navItems = [
   { href: "/budget", label: "Budget", icon: Calculator },
   { href: "/locations", label: "Locations", icon: MapPin },
   { href: "/gallery", label: "Gallery", icon: Image },
-] as const;
+] as const
 
 export default function Navbar() {
-  const pathname = usePathname();
-  const router = useRouter();
-  const { isLoggedIn, logout } = useAuth();
-  const isClient = useAuthCheck(); // Ensures authentication state is checked safely
+  const pathname = usePathname()
+  const router = useRouter()
+  const { isLoggedIn, logout } = useAuth()
 
   const handleLogout = () => {
-    logout();
-    router.push("/");
-  };
+    logout()
+    router.push("/")
+  }
 
   return (
     <nav className="bg-[#0F7B2A] text-white">
@@ -47,8 +46,7 @@ export default function Navbar() {
               </Link>
             ))}
 
-            {/* Ensure Logout button only renders after hydration */}
-            {isClient && isLoggedIn && (
+            {isLoggedIn && (
               <button onClick={handleLogout} className="flex items-center space-x-1 text-white hover:text-white/90">
                 <LogOut className="h-5 w-5" />
                 <span>Logout</span>
@@ -58,5 +56,5 @@ export default function Navbar() {
         </div>
       </div>
     </nav>
-  );
+  )
 }

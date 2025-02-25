@@ -2,11 +2,13 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Image, Video, X } from "lucide-react"
 import Link from "next/link"
+import { useAuth } from "@/lib/auth"
 
 type MediaItem = {
   type: "image" | "video"
@@ -32,7 +34,6 @@ const initialMedia: MediaItem[] = [
 
 export default function GalleryPage() {
   const [mediaItems, setMediaItems] = useState<MediaItem[]>(initialMedia)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [newMedia, setNewMedia] = useState<MediaItem>({
     type: "image",
@@ -40,11 +41,8 @@ export default function GalleryPage() {
     title: "",
     date: new Date().toISOString().split("T")[0],
   })
-
-  useEffect(() => {
-    const authToken = localStorage.getItem("authToken")
-    setIsLoggedIn(!!authToken)
-  }, [])
+  const router = useRouter()
+  const { isLoggedIn, logout } = useAuth()
 
   const handleUpload = (e: React.FormEvent) => {
     e.preventDefault()
@@ -66,17 +64,27 @@ export default function GalleryPage() {
     setMediaItems(newMediaItems)
   }
 
+  const handleLogout = () => {
+    logout()
+    router.push("/gallery")
+  }
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-green-800">Media Gallery</h1>
         {isLoggedIn ? (
-          <Button
-            onClick={() => setEditMode(!editMode)}
-            className={`${editMode ? "bg-red-600" : "bg-green-600"} text-white`}
-          >
-            {editMode ? "Save Changes" : "Edit Gallery"}
-          </Button>
+          <div className="flex gap-4">
+            <Button
+              onClick={() => setEditMode(!editMode)}
+              className={`${editMode ? "bg-red-600" : "bg-green-600"} text-white`}
+            >
+              {editMode ? "Save Changes" : "Edit Gallery"}
+            </Button>
+            <Button onClick={handleLogout} className="bg-red-600 text-white hover:bg-red-700">
+              Logout
+            </Button>
+          </div>
         ) : (
           <Link href="/login">
             <Button className="bg-green-600 text-white hover:bg-green-700">Admin Login</Button>
@@ -167,4 +175,3 @@ export default function GalleryPage() {
     </div>
   )
 }
-

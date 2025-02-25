@@ -1,10 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus, X } from "lucide-react"
 import Link from "next/link"
+import { useAuth } from "@/lib/auth"
 
 const initialLocations = [
   { name: "AKALO", masjid: "Masjid Al-Nur", households: 55 },
@@ -27,14 +29,10 @@ const initialLocations = [
 
 export default function LocationsPage() {
   const [locations, setLocations] = useState(initialLocations)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [newLocation, setNewLocation] = useState({ name: "", masjid: "", households: 0 })
-
-  useEffect(() => {
-    const authToken = localStorage.getItem("authToken")
-    setIsLoggedIn(!!authToken)
-  }, [])
+  const router = useRouter()
+  const { isLoggedIn, logout } = useAuth()
 
   const handleEdit = (index: number, field: string, value: string | number) => {
     if (!isLoggedIn || !editMode) return
@@ -63,6 +61,11 @@ export default function LocationsPage() {
     setLocations(newLocations)
   }
 
+  const handleLogout = () => {
+    logout()
+    router.push("/locations")
+  }
+
   const totalHouseholds = locations.reduce((sum, location) => sum + location.households, 0)
 
   return (
@@ -70,12 +73,17 @@ export default function LocationsPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-green-800">Distribution Locations</h1>
         {isLoggedIn ? (
-          <Button
-            onClick={() => setEditMode(!editMode)}
-            className={`${editMode ? "bg-red-600" : "bg-green-600"} text-white`}
-          >
-            {editMode ? "Save Changes" : "Edit Locations"}
-          </Button>
+          <div className="flex gap-4">
+            <Button
+              onClick={() => setEditMode(!editMode)}
+              className={`${editMode ? "bg-red-600" : "bg-green-600"} text-white`}
+            >
+              {editMode ? "Save Changes" : "Edit Locations"}
+            </Button>
+            <Button onClick={handleLogout} className="bg-red-600 text-white hover:bg-red-700">
+              Logout
+            </Button>
+          </div>
         ) : (
           <Link href="/login">
             <Button className="bg-green-600 text-white hover:bg-green-700">Admin Login</Button>
@@ -176,4 +184,3 @@ export default function LocationsPage() {
     </div>
   )
 }
-

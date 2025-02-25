@@ -2,11 +2,12 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
+import { useAuth } from "@/lib/auth"
 
 // This would typically come from a database or API
 const initialDonors = [
@@ -22,13 +23,8 @@ export default function DonorsPage() {
   const [sortBy, setSortBy] = useState<"name" | "amount">("amount")
   const [newDonorName, setNewDonorName] = useState("")
   const [newDonorAmount, setNewDonorAmount] = useState("")
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const router = useRouter()
-
-  useEffect(() => {
-    const authToken = localStorage.getItem("authToken")
-    setIsLoggedIn(!!authToken)
-  }, [])
+  const { isLoggedIn, logout } = useAuth()
 
   const sortDonors = (by: "name" | "amount") => {
     const sorted = [...donors].sort((a, b) => {
@@ -57,8 +53,7 @@ export default function DonorsPage() {
   }
 
   const handleLogout = () => {
-    localStorage.removeItem("authToken")
-    setIsLoggedIn(false)
+    logout()
     router.push("/donors")
   }
 
@@ -161,4 +156,3 @@ export default function DonorsPage() {
     </div>
   )
 }
-

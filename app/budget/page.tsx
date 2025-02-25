@@ -1,9 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
+import { useAuth } from "@/lib/auth"
 
 // Exchange rate (you might want to fetch this from an API)
 const USD_TO_UGX = 3800
@@ -24,14 +26,10 @@ const initialBudgetItems = [
 
 export default function BudgetPage() {
   const [budgetItems, setBudgetItems] = useState(initialBudgetItems)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [newItem, setNewItem] = useState({ item: "", qty: 0, population: 0, totalKgs: 0, rate: 0, amount: 0 })
-
-  useEffect(() => {
-    const authToken = localStorage.getItem("authToken")
-    setIsLoggedIn(!!authToken)
-  }, [])
+  const router = useRouter()
+  const { isLoggedIn, logout } = useAuth()
 
   const totalAmount = budgetItems.reduce((sum, item) => sum + item.amount, 0)
   const totalUSD = totalAmount / USD_TO_UGX
@@ -75,17 +73,27 @@ export default function BudgetPage() {
     setBudgetItems(newBudgetItems)
   }
 
+  const handleLogout = () => {
+    logout()
+    router.push("/budget")
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-green-800">Distribution Budget</h1>
         {isLoggedIn ? (
-          <Button
-            onClick={() => setEditMode(!editMode)}
-            className={`${editMode ? "bg-red-600" : "bg-green-600"} text-white`}
-          >
-            {editMode ? "Save Changes" : "Edit Budget"}
-          </Button>
+          <div className="flex gap-4">
+            <Button
+              onClick={() => setEditMode(!editMode)}
+              className={`${editMode ? "bg-red-600" : "bg-green-600"} text-white`}
+            >
+              {editMode ? "Save Changes" : "Edit Budget"}
+            </Button>
+            <Button onClick={handleLogout} className="bg-red-600 text-white hover:bg-red-700">
+              Logout
+            </Button>
+          </div>
         ) : (
           <Link href="/login">
             <Button className="bg-green-600 text-white hover:bg-green-700">Admin Login</Button>
@@ -231,4 +239,3 @@ export default function BudgetPage() {
     </div>
   )
 }
-
