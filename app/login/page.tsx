@@ -10,7 +10,7 @@ import { useAuth } from "@/lib/auth"
 
 const ADMIN_CREDENTIALS = {
   username: "admin",
-  password: "newSecurePassword123!",
+  password: " ",
 } as const
 
 export default function LoginPage() {
