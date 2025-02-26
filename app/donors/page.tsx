@@ -16,6 +16,8 @@ type Donor = {
 
 export default function DonorsPage() {
   const [donors, setDonors] = useState<Donor[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [sortBy, setSortBy] = useState<"name" | "amount">("amount")
   const [newDonorName, setNewDonorName] = useState("")
   const [newDonorAmount, setNewDonorAmount] = useState("")
@@ -23,25 +25,32 @@ export default function DonorsPage() {
   const { isLoggedIn, logout, token } = useAuth()
 
   const fetchDonors = useCallback(async () => {
+    if (!token) {
+      setLoading(false)
+      return
+    }
+
     try {
+      setLoading(true)
+      setError(null)
+
       const response = await fetch("/api/donors", {
-        method: "GET",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(`Failed to fetch donors: ${errorData.error || response.statusText}`)
+        const data = await response.json()
+        throw new Error(data.message || "Failed to fetch donors")
       }
 
-      const donorsData = await response.json()
-      setDonors(donorsData)
+      const donors = await response.json()
+      setDonors(donors)
     } catch (error) {
-      console.error("Error fetching donors:", error)
-      alert(`Failed to fetch donors: ${error instanceof Error ? error.message : "Unknown error"}`)
+      setError(error instanceof Error ? error.message : "An error occurred")
+    } finally {
+      setLoading(false)
     }
   }, [token])
 
@@ -63,33 +72,31 @@ export default function DonorsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (newDonorName && newDonorAmount && token) {
-      try {
-        const response = await fetch("/api/donors", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            name: newDonorName,
-            amount: Number.parseFloat(newDonorAmount),
-          }),
-        })
+    if (!token || !newDonorName || !newDonorAmount) return
 
-        if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(`Failed to add donor: ${errorData.error || response.statusText}`)
-        }
+    try {
+      const response = await fetch("/api/donors", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: newDonorName,
+          amount: Number(newDonorAmount),
+        }),
+      })
 
-        const newDonor = await response.json()
-        setNewDonorName("")
-        setNewDonorAmount("")
-        fetchDonors()
-      } catch (error) {
-        console.error("Error adding donor:", error)
-        alert(`Failed to add donor: ${error instanceof Error ? error.message : "Unknown error"}`)
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.message || "Failed to add donor")
       }
+
+      setNewDonorName("")
+      setNewDonorAmount("")
+      fetchDonors()
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Failed to add donor")
     }
   }
 
@@ -98,6 +105,7 @@ export default function DonorsPage() {
     router.push("/donors")
   }
 
+  // Rest of the component remains the same, but let's update the error display
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
@@ -112,6 +120,12 @@ export default function DonorsPage() {
           </Link>
         )}
       </div>
+
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+          <p className="text-red-600">{error}</p>
+        </div>
+      )}
 
       {isLoggedIn && (
         <div className="mb-8 p-4 bg-green-50 rounded-lg">
@@ -197,3 +211,4 @@ export default function DonorsPage() {
     </div>
   )
 }
+

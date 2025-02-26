@@ -2,49 +2,62 @@ import { NextResponse } from "next/server"
 import { PrismaClient } from "@prisma/client"
 import { verifyToken } from "@/lib/jwt"
 
+// Create a single PrismaClient instance to be reused
 const prisma = new PrismaClient()
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    // Simplified error handling for auth
+    const authHeader = request.headers.get("Authorization")
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+    }
+
+    const token = authHeader.split(" ")[1]
+    const payload = verifyToken(token)
+    if (!payload) {
+      return NextResponse.json({ message: "Invalid token" }, { status: 401 })
+    }
+
     const donors = await prisma.donor.findMany({
       orderBy: { amount: "desc" },
     })
+
     return NextResponse.json(donors)
   } catch (error) {
-    console.error("Failed to fetch donors:", error)
-    return NextResponse.json({ error: "Failed to fetch donors" }, { status: 500 })
+    console.error("Database error:", error)
+    return NextResponse.json({ message: "Internal server error" }, { status: 500 })
   }
 }
 
 export async function POST(request: Request) {
-  console.log("POST request received") // Add this line for debugging
-
-  // Check for authentication
-  const authHeader = request.headers.get("Authorization")
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    console.log("Unauthorized: No Bearer token") // Add this line for debugging
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const token = authHeader.split(" ")[1]
-  const payload = verifyToken(token)
-  if (!payload) {
-    console.log("Unauthorized: Invalid token") // Add this line for debugging
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 })
-  }
-
   try {
+    const authHeader = request.headers.get("Authorization")
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+    }
+
+    const token = authHeader.split(" ")[1]
+    const payload = verifyToken(token)
+    if (!payload) {
+      return NextResponse.json({ message: "Invalid token" }, { status: 401 })
+    }
+
     const { name, amount } = await request.json()
-    console.log("Received donor data:", { name, amount }) // Add this line for debugging
+
+    if (!name || typeof amount !== "number") {
+      return NextResponse.json({ message: "Invalid donor data" }, { status: 400 })
+    }
 
     const donor = await prisma.donor.create({
-      data: { name, amount: Number.parseFloat(amount) },
+      data: { name, amount },
     })
-    console.log("Donor created:", donor) // Add this line for debugging
+
     return NextResponse.json(donor)
   } catch (error) {
-    console.error("Failed to create donor:", error)
-    return NextResponse.json({ error: "Failed to create donor" }, { status: 500 })
+    console.error("Database error:", error)
+    return NextResponse.json({ message: "Internal server error" }, { status: 500 })
   }
 }
+
 
