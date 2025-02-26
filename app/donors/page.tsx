@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth"
+import { ChangePasswordForm } from "@/components/change-password-form"
 
 type Donor = {
   name: string
@@ -165,6 +166,12 @@ export default function DonorsPage() {
               Add Pledge
             </Button>
           </form>
+        </div>
+      )}
+
+      {isLoggedIn && (
+        <div className="mt-8 p-4 bg-gray-50 rounded-lg">
+          <ChangePasswordForm />
         </div>
       )}
 
