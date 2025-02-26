@@ -1,12 +1,12 @@
 "use client"
 
 import type React from "react"
+
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/lib/auth"
-
 
 export default function LoginPage() {
   const [username, setUsername] = useState("")
@@ -28,7 +28,7 @@ export default function LoginPage() {
 
       if (response.ok) {
         const { token } = await response.json()
-        // Make sure we pass the token to the login function
+        console.log("Received token:", token) // Add this line for debugging
         login(token)
         router.push("/donors")
       } else {

@@ -59,8 +59,6 @@ export default function DonorsPage() {
     })
     setDonors(sorted)
     setSortBy(by)
-    // Save the sorted donors to localStorage
-    localStorage.setItem("donors", JSON.stringify(sorted))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,7 +82,7 @@ export default function DonorsPage() {
           throw new Error(`Failed to add donor: ${errorData.error || response.statusText}`)
         }
 
-        await response.json()
+        const newDonor = await response.json()
         setNewDonorName("")
         setNewDonorAmount("")
         fetchDonors()
@@ -199,3 +197,4 @@ export default function DonorsPage() {
     </div>
   )
 }
+
