@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,7 +10,6 @@ import Link from "next/link"
 import { useAuth } from "@/lib/auth"
 
 type Donor = {
-  id: number
   name: string
   amount: number
 }
@@ -21,24 +20,34 @@ export default function DonorsPage() {
   const [newDonorName, setNewDonorName] = useState("")
   const [newDonorAmount, setNewDonorAmount] = useState("")
   const router = useRouter()
-  const { isLoggedIn, logout } = useAuth()
+  const { isLoggedIn, logout, token } = useAuth()
+
+  const fetchDonors = useCallback(async () => {
+    try {
+      const response = await fetch("/api/donors", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(`Failed to fetch donors: ${errorData.error || response.statusText}`)
+      }
+
+      const donorsData = await response.json()
+      setDonors(donorsData)
+    } catch (error) {
+      console.error("Error fetching donors:", error)
+      alert(`Failed to fetch donors: ${error instanceof Error ? error.message : "Unknown error"}`)
+    }
+  }, [token])
 
   useEffect(() => {
     fetchDonors()
-  }, [])
-
-  const fetchDonors = async () => {
-    try {
-      const response = await fetch("/api/donors")
-      if (!response.ok) {
-        throw new Error("Failed to fetch donors")
-      }
-      const data = await response.json()
-      setDonors(data)
-    } catch (error) {
-      console.error("Error fetching donors:", error)
-    }
-  }
+  }, [fetchDonors])
 
   const sortDonors = (by: "name" | "amount") => {
     const sorted = [...donors].sort((a, b) => {
@@ -50,16 +59,19 @@ export default function DonorsPage() {
     })
     setDonors(sorted)
     setSortBy(by)
+    // Save the sorted donors to localStorage
+    localStorage.setItem("donors", JSON.stringify(sorted))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (newDonorName && newDonorAmount) {
+    if (newDonorName && newDonorAmount && token) {
       try {
         const response = await fetch("/api/donors", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             name: newDonorName,
@@ -68,14 +80,17 @@ export default function DonorsPage() {
         })
 
         if (!response.ok) {
-          throw new Error("Failed to add donor")
+          const errorData = await response.json()
+          throw new Error(`Failed to add donor: ${errorData.error || response.statusText}`)
         }
 
+        await response.json()
         setNewDonorName("")
         setNewDonorAmount("")
-        fetchDonors() // Refresh the donor list
+        fetchDonors()
       } catch (error) {
         console.error("Error adding donor:", error)
+        alert(`Failed to add donor: ${error instanceof Error ? error.message : "Unknown error"}`)
       }
     }
   }

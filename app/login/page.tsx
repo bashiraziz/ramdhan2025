@@ -1,37 +1,42 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/lib/auth"
-
-const ADMIN_CREDENTIALS = {
-  username: "admin",
-  password: "B94089@b94089?",
-} as const
 
 export default function LoginPage() {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const router = useRouter()
-  const searchParams = useSearchParams()
   const { login } = useAuth()
-  const callbackUrl = searchParams.get("callbackUrl") || "/donors"
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setError("")
 
-    const isValidCredentials = username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password
+    try {
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      })
 
-    if (isValidCredentials) {
-      login()
-      router.push(callbackUrl)
-    } else {
-      setError("Invalid username or password")
+      if (response.ok) {
+        const { token } = await response.json()
+        // Make sure we pass the token to the login function
+        login(token)
+        router.push("/donors")
+      } else {
+        const errorData = await response.json()
+        setError(errorData.error || "Invalid username or password")
+      }
+    } catch (error) {
+      console.error("Login error:", error)
+      setError("An error occurred. Please try again.")
     }
   }
 
