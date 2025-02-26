@@ -28,7 +28,6 @@ export default function LoginPage() {
 
       if (response.ok) {
         const { token } = await response.json()
-        console.log("Received token:", token) // Add this line for debugging
         login(token)
         router.push("/donors")
       } else {
@@ -83,3 +82,4 @@ export default function LoginPage() {
     </div>
   )
 }
+
