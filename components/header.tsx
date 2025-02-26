@@ -1,5 +1,6 @@
+import Image from "next/image";
 import Link from "next/link"
-import { Home, Info, Image, MapPin, Calculator, Users } from "lucide-react"
+import { Home, Info, MapPin, Calculator, Users } from "lucide-react"
 
 export default function Header() {
   return (
@@ -36,10 +37,10 @@ export default function Header() {
               </Link>
             </li>
             <li>
-              <Link href="/media" className="flex items-center space-x-1 text-white hover:text-green-200">
-                <Image className="h-4 w-4" />
-                <span>Gallery</span>
-              </Link>
+            <Link href="/media" className="flex items-center space-x-1 text-white hover:text-green-200">
+              <Image src="/media-icon.svg" width={16} height={16} alt="Media Icon" />
+            </Link>
+
             </li>
           </ul>
         </nav>

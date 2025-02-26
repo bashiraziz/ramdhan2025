@@ -140,9 +140,22 @@ export default function MediaPage() {
         {mediaItems.map((item, index) => (
           <div key={index} className="bg-white rounded-lg shadow-lg overflow-hidden">
             <div className="relative">
-                <Image src={item.url || "/placeholder.svg"} alt={item.title} width={300} height={200} className="w-full h-48 object-cover" />
-                <Image src={item.url || "/placeholder.svg"} alt={item.title} layout="responsive" width={300} height={200} className="w-full h-48 object-cover" />
-                <video src={item.url} className="w-full h-48 object-cover" controls />
+              <Image
+                src={item.url || "/placeholder.svg"}
+                alt={item.title}
+                width={300}
+                height={200}
+                className="w-full h-48 object-cover"
+              />
+              <Image
+                src={item.url || "/placeholder.svg"}
+                alt={item.title}
+                layout="responsive"
+                width={300}
+                height={200}
+                className="w-full h-48 object-cover"
+              />
+              <video src={item.url} className="w-full h-48 object-cover" controls />
               {editMode && isLoggedIn && (
                 <Button
                   onClick={() => handleDelete(index)}
@@ -164,7 +177,11 @@ export default function MediaPage() {
               <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
               <p className="text-sm text-gray-500">{new Date(item.date).toLocaleDateString()}</p>
               <div className="mt-2 flex items-center text-sm text-gray-500">
-                {item.type === "image" ? <Image src={item.url} alt={item.title} className="w-4 h-4 mr-1" /> : <Video className="w-4 h-4 mr-1" />}
+                {item.type === "image" ? (
+                  <Image src={item.url} alt={item.title} className="w-4 h-4 mr-1" />
+                ) : (
+                  <Video className="w-4 h-4 mr-1" />
+                )}
                 <span className="capitalize">{item.type}</span>
               </div>
             </div>
