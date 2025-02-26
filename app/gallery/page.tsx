@@ -6,9 +6,10 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Image, Video, X } from "lucide-react"
+import { Video, X } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth"
+import Image from "next/image"
 
 type MediaItem = {
   type: "image" | "video"
@@ -148,7 +149,15 @@ export default function GalleryPage() {
           <div key={index} className="bg-white rounded-lg shadow-lg overflow-hidden">
             <div className="relative">
               {item.type === "image" ? (
-                <img src={item.url || "/placeholder.svg"} alt={item.title} className="w-full h-48 object-cover" />
+                <div className="relative w-full h-48">
+                  <Image
+                    src={item.url || "/placeholder.svg"}
+                    alt={item.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="object-cover"
+                  />
+                </div>
               ) : (
                 <video src={item.url} className="w-full h-48 object-cover" controls />
               )}
@@ -165,7 +174,11 @@ export default function GalleryPage() {
               <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
               <p className="text-sm text-gray-500">{new Date(item.date).toLocaleDateString()}</p>
               <div className="mt-2 flex items-center text-sm text-gray-500">
-                {item.type === "image" ? <Image className="w-4 h-4 mr-1" /> : <Video className="w-4 h-4 mr-1" />}
+                {item.type === "image" ? (
+                  <Image src="/placeholder.svg" alt="" width={16} height={16} className="w-4 h-4 mr-1" />
+                ) : (
+                  <Video className="w-4 h-4 mr-1" />
+                )}
                 <span className="capitalize">{item.type}</span>
               </div>
             </div>

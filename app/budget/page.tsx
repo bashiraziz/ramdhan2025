@@ -1,82 +1,91 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import Link from "next/link"
-import { useAuth } from "@/lib/auth"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import Link from "next/link";
+import { useAuth } from "@/lib/auth";
 
 // Exchange rate (you might want to fetch this from an API)
-const USD_TO_UGX = 3800
+const USD_TO_UGX = 3800;
 
-const initialBudgetItems = [
+type BudgetItem = {
+  item: string;
+  qty: number;
+  population: number;
+  totalKgs: number;
+  rate: number;
+  amount: number;
+};
+
+const initialBudgetItems: BudgetItem[] = [
   { item: "RICE", qty: 3.0, population: 700, totalKgs: 2100.0, rate: 3000, amount: 6300000.0 },
   { item: "POSO", qty: 3.0, population: 700, totalKgs: 2100.0, rate: 1900, amount: 3990000.0 },
   { item: "COOKING OIL", qty: 1.0, population: 700, totalKgs: 700.0, rate: 8000, amount: 5600000.0 },
   { item: "SUGAR", qty: 1.0, population: 700, totalKgs: 700.0, rate: 4300, amount: 3010000.0 },
   { item: "PACKING BAGS", qty: 4.0, population: 0, totalKgs: 0, rate: 4500, amount: 18000.0 },
-  { item: "TRANPORT within", qty: 5.0, population: 0, totalKgs: 0, rate: 10000, amount: 50000.0 },
-  { item: "LABOUR FOR PACKING", qty: 0, population: 0, totalKgs: 0, rate: 20000, amount: 200000.0 },
-  { item: "AIR TIME", qty: 0, population: 0, totalKgs: 0, rate: 0, amount: 40000.0 },
-  { item: "VECHALE HIRE", qty: 0, population: 0, totalKgs: 0, rate: 0, amount: 500000.0 },
-  { item: "FUEL DIESEL", qty: 70.0, population: 0, totalKgs: 0, rate: 4800, amount: 336000.0 },
-  { item: "CONTIGENCY", qty: 1.0, population: 0, totalKgs: 0, rate: 200000, amount: 200000.0 },
-]
+];
 
 export default function BudgetPage() {
-  const [budgetItems, setBudgetItems] = useState(initialBudgetItems)
-  const [editMode, setEditMode] = useState(false)
-  const [newItem, setNewItem] = useState({ item: "", qty: 0, population: 0, totalKgs: 0, rate: 0, amount: 0 })
-  const router = useRouter()
-  const { isLoggedIn, logout } = useAuth()
+  const [budgetItems, setBudgetItems] = useState<BudgetItem[]>(initialBudgetItems);
+  const [editMode, setEditMode] = useState(false);
+  const [newItem, setNewItem] = useState<BudgetItem>({
+    item: "",
+    qty: 0,
+    population: 0,
+    totalKgs: 0,
+    rate: 0,
+    amount: 0,
+  });
 
-  const totalAmount = budgetItems.reduce((sum, item) => sum + item.amount, 0)
-  const totalUSD = totalAmount / USD_TO_UGX
+  const router = useRouter();
+  const { isLoggedIn, logout } = useAuth();
 
-  const handleEdit = (index: number, field: string, value: string | number) => {
-    if (!isLoggedIn || !editMode) return
+  const totalAmount = budgetItems.reduce((sum, item) => sum + item.amount, 0);
+  const totalUSD = totalAmount / USD_TO_UGX;
 
-    const newBudgetItems = [...budgetItems]
-    const item = { ...newBudgetItems[index] }
+  // ✅ Fixed `handleEdit` with type safety
+  const handleEdit = <T extends keyof BudgetItem>(index: number, field: T, value: string | number) => {
+    if (!isLoggedIn || !editMode) return;
 
-    // Update the field
-    item[field as keyof typeof item] = typeof value === "string" ? Number.parseFloat(value) || 0 : value
+    const newBudgetItems = [...budgetItems];
+    const item = { ...newBudgetItems[index] };
 
-    // Recalculate totals
+    // Ensure the field value is correctly cast to the expected type
+    item[field] = (typeof value === "string" ? Number.parseFloat(value) || 0 : value) as BudgetItem[T];
+
+    // Recalculate totals if necessary
     if (field !== "amount") {
       if (item.qty && item.population) {
-        item.totalKgs = item.qty * item.population
+        item.totalKgs = item.qty * item.population;
       }
       if (item.totalKgs && item.rate) {
-        item.amount = item.totalKgs * item.rate
+        item.amount = item.totalKgs * item.rate;
       }
     }
 
-    newBudgetItems[index] = item
-    setBudgetItems(newBudgetItems)
-  }
+    newBudgetItems[index] = item;
+    setBudgetItems(newBudgetItems);
+  };
 
   const handleAddItem = () => {
-    if (!isLoggedIn || !editMode) return
-
+    if (!isLoggedIn || !editMode) return;
     if (newItem.item) {
-      setBudgetItems([...budgetItems, newItem])
-      setNewItem({ item: "", qty: 0, population: 0, totalKgs: 0, rate: 0, amount: 0 })
+      setBudgetItems([...budgetItems, newItem]);
+      setNewItem({ item: "", qty: 0, population: 0, totalKgs: 0, rate: 0, amount: 0 });
     }
-  }
+  };
 
   const handleDeleteItem = (index: number) => {
-    if (!isLoggedIn || !editMode) return
-
-    const newBudgetItems = budgetItems.filter((_, i) => i !== index)
-    setBudgetItems(newBudgetItems)
-  }
+    if (!isLoggedIn || !editMode) return;
+    setBudgetItems(budgetItems.filter((_, i) => i !== index));
+  };
 
   const handleLogout = () => {
-    logout()
-    router.push("/budget")
-  }
+    logout();
+    router.push("/budget");
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -101,6 +110,12 @@ export default function BudgetPage() {
         )}
       </div>
 
+      {/* ✅ Display Total Budget in UGX and USD */}
+      <div className="text-lg font-semibold text-gray-800 mt-4">
+        Total Budget: {totalAmount.toLocaleString()} UGX ({totalUSD.toFixed(2)} USD)
+      </div>
+
+      {/* ✅ Add New Item Section */}
       {editMode && isLoggedIn && (
         <div className="mb-8 p-4 bg-green-50 rounded-lg">
           <h2 className="text-xl font-semibold text-green-800 mb-4">Add New Budget Item</h2>
@@ -141,101 +156,71 @@ export default function BudgetPage() {
         </div>
       )}
 
-      <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty per person</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Population</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total KGs</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rate (UGX)</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount (UGX)</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount (USD)</th>
-                {editMode && isLoggedIn && (
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+      {/* Table Code Goes Here */}
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white">
+          <thead>
+            <tr>
+              <th className="py-2">Item</th>
+              <th className="py-2">Qty</th>
+              <th className="py-2">Population</th>
+              <th className="py-2">Total KGs</th>
+              <th className="py-2">Rate</th>
+              <th className="py-2">Amount</th>
+              {editMode && <th className="py-2">Actions</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {budgetItems.map((item, index) => (
+              <tr key={index}>
+                <td className="border px-4 py-2">{item.item}</td>
+                <td className="border px-4 py-2">
+                  {editMode ? (
+                    <Input
+                      type="number"
+                      value={item.qty}
+                      onChange={(e) => handleEdit(index, "qty", e.target.value)}
+                    />
+                  ) : (
+                    item.qty
+                  )}
+                </td>
+                <td className="border px-4 py-2">
+                  {editMode ? (
+                    <Input
+                      type="number"
+                      value={item.population}
+                      onChange={(e) => handleEdit(index, "population", e.target.value)}
+                    />
+                  ) : (
+                    item.population
+                  )}
+                </td>
+                <td className="border px-4 py-2">{item.totalKgs}</td>
+                <td className="border px-4 py-2">
+                  {editMode ? (
+                    <Input
+                      type="number"
+                      value={item.rate}
+                      onChange={(e) => handleEdit(index, "rate", e.target.value)}
+                    />
+                  ) : (
+                    item.rate
+                  )}
+                </td>
+                <td className="border px-4 py-2">{item.amount}</td>
+                {editMode && (
+                  <td className="border px-4 py-2">
+                    <Button onClick={() => handleDeleteItem(index)} className="bg-red-600 text-white">
+                      Delete
+                    </Button>
+                  </td>
                 )}
               </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {budgetItems.map((item, index) => (
-                <tr key={index}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {editMode && isLoggedIn ? (
-                      <Input
-                        value={item.item}
-                        onChange={(e) => handleEdit(index, "item", e.target.value)}
-                        className="w-full"
-                      />
-                    ) : (
-                      item.item
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {editMode && isLoggedIn ? (
-                      <Input
-                        type="number"
-                        value={item.qty}
-                        onChange={(e) => handleEdit(index, "qty", e.target.value)}
-                        className="w-24"
-                      />
-                    ) : (
-                      item.qty.toFixed(2)
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {editMode && isLoggedIn ? (
-                      <Input
-                        type="number"
-                        value={item.population}
-                        onChange={(e) => handleEdit(index, "population", e.target.value)}
-                        className="w-24"
-                      />
-                    ) : (
-                      item.population
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.totalKgs.toFixed(2)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {editMode && isLoggedIn ? (
-                      <Input
-                        type="number"
-                        value={item.rate}
-                        onChange={(e) => handleEdit(index, "rate", e.target.value)}
-                        className="w-24"
-                      />
-                    ) : (
-                      item.rate.toLocaleString()
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.amount.toLocaleString()}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {(item.amount / USD_TO_UGX).toFixed(2)}
-                  </td>
-                  {editMode && isLoggedIn && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <Button onClick={() => handleDeleteItem(index)} className="bg-red-600 text-white">
-                        Delete
-                      </Button>
-                    </td>
-                  )}
-                </tr>
-              ))}
-              <tr className="bg-gray-50 font-bold">
-                <td colSpan={5} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  GRAND TOTAL
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {totalAmount.toLocaleString()} UGX
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{totalUSD.toFixed(2)} USD</td>
-                {editMode && isLoggedIn && <td></td>}
-              </tr>
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
-  )
+  );
 }
