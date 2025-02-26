@@ -2,29 +2,43 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth"
 
-// This would typically come from a database or API
-const initialDonors = [
-  { name: "John Doe", amount: 1000 },
-  { name: "Jane Smith", amount: 500 },
-  { name: "Acme Corporation", amount: 5000 },
-  { name: "Anonymous", amount: 250 },
-  { name: "Local Mosque", amount: 2000 },
-]
+type Donor = {
+  id: number
+  name: string
+  amount: number
+}
 
 export default function DonorsPage() {
-  const [donors, setDonors] = useState(initialDonors)
+  const [donors, setDonors] = useState<Donor[]>([])
   const [sortBy, setSortBy] = useState<"name" | "amount">("amount")
   const [newDonorName, setNewDonorName] = useState("")
   const [newDonorAmount, setNewDonorAmount] = useState("")
   const router = useRouter()
   const { isLoggedIn, logout } = useAuth()
+
+  useEffect(() => {
+    fetchDonors()
+  }, [])
+
+  const fetchDonors = async () => {
+    try {
+      const response = await fetch("/api/donors")
+      if (!response.ok) {
+        throw new Error("Failed to fetch donors")
+      }
+      const data = await response.json()
+      setDonors(data)
+    } catch (error) {
+      console.error("Error fetching donors:", error)
+    }
+  }
 
   const sortDonors = (by: "name" | "amount") => {
     const sorted = [...donors].sort((a, b) => {
@@ -38,17 +52,31 @@ export default function DonorsPage() {
     setSortBy(by)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (newDonorName && newDonorAmount) {
-      const newDonor = {
-        name: newDonorName,
-        amount: Number.parseFloat(newDonorAmount),
+      try {
+        const response = await fetch("/api/donors", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: newDonorName,
+            amount: Number.parseFloat(newDonorAmount),
+          }),
+        })
+
+        if (!response.ok) {
+          throw new Error("Failed to add donor")
+        }
+
+        setNewDonorName("")
+        setNewDonorAmount("")
+        fetchDonors() // Refresh the donor list
+      } catch (error) {
+        console.error("Error adding donor:", error)
       }
-      setDonors([...donors, newDonor])
-      setNewDonorName("")
-      setNewDonorAmount("")
-      sortDonors(sortBy)
     }
   }
 
